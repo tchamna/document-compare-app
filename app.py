@@ -16,7 +16,7 @@ import streamlit as st
 
 from core.extractors import extract_slide_lines, extract_text_lines
 from core.comparators import compute_diffs, compute_diffs_sequential
-from core.report import write_word_report
+from core.report import write_word_report, write_pdf_report
 from core.helpers import LineDiff, word_diff_pairs
 
 # ------------------------------------------------------------------ #
@@ -126,26 +126,46 @@ if original_file and corrected_file:
         st.info(f"Found **{len(diffs)}** difference{'s' if len(diffs) != 1 else ''}.")
 
         # Build the Word report in memory for download
-        report_buf = BytesIO()
-        report_path = Path(tempfile.mktemp(suffix=".docx"))
+        report_docx_path = Path(tempfile.mktemp(suffix=".docx"))
         write_word_report(
             diffs=diffs,
-            out_path=report_path,
+            out_path=report_docx_path,
             original_name=original_file.name,
             corrige_name=corrected_file.name,
         )
-        report_buf.write(report_path.read_bytes())
-        report_buf.seek(0)
+        report_docx_buf = BytesIO(report_docx_path.read_bytes())
+        report_docx_buf.seek(0)
 
-        st.download_button(
-            label="⬇️  Download Word Report",
-            data=report_buf,
-            file_name=f"Differences_{Path(original_file.name).stem}.docx",
-            mime=(
-                "application/vnd.openxmlformats-officedocument"
-                ".wordprocessingml.document"
-            ),
+        # Build the PDF report in memory for download
+        report_pdf_path = Path(tempfile.mktemp(suffix=".pdf"))
+        write_pdf_report(
+            diffs=diffs,
+            out_path=report_pdf_path,
+            original_name=original_file.name,
+            corrige_name=corrected_file.name,
         )
+        report_pdf_buf = BytesIO(report_pdf_path.read_bytes())
+        report_pdf_buf.seek(0)
+
+        # Download buttons
+        col1, col2 = st.columns(2)
+        with col1:
+            st.download_button(
+                label="⬇️  Download Word Report",
+                data=report_docx_buf,
+                file_name=f"Differences_{Path(original_file.name).stem}.docx",
+                mime=(
+                    "application/vnd.openxmlformats-officedocument"
+                    ".wordprocessingml.document"
+                ),
+            )
+        with col2:
+            st.download_button(
+                label="⬇️  Download PDF Report",
+                data=report_pdf_buf,
+                file_name=f"Differences_{Path(original_file.name).stem}.pdf",
+                mime="application/pdf",
+            )
 
         # In-browser preview
         st.subheader("Differences")
@@ -175,7 +195,8 @@ if original_file and corrected_file:
     # Clean up temp files
     path_orig.unlink(missing_ok=True)
     path_corr.unlink(missing_ok=True)
-    report_path.unlink(missing_ok=True)
+    report_docx_path.unlink(missing_ok=True)
+    report_pdf_path.unlink(missing_ok=True)
 
 else:
     st.caption("👆 Upload both files to get started.")

@@ -7,7 +7,7 @@ from core.extractors import (
     extract_text_lines,
 )
 from core.comparators import compute_diffs, compute_diffs_sequential
-from core.report import write_word_report
+from core.report import write_word_report, write_pdf_report
 from core.helpers import LineDiff
 
 __all__ = [
@@ -18,5 +18,6 @@ __all__ = [
     "compute_diffs",
     "compute_diffs_sequential",
     "write_word_report",
+    "write_pdf_report",
     "LineDiff",
 ]
