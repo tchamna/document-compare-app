@@ -64,13 +64,11 @@ def word_diff_pairs(text1: str, text2: str) -> List[Tuple[str, bool]]:
     for w1, w2 in zip(words1, words2):
         result.append((w1, w1 != w2))
 
-    # Extra words in either list are always "different"
+    # Extra words in text1 are genuinely "different" (added/removed)
     if len(words1) > len(words2):
         for w in words1[len(words2):]:
             result.append((w, True))
-    elif len(words2) > len(words1):
-        for w in words2[len(words1):]:
-            result.append((w, True))
+    # Extra words in text2 are NOT shown – they don't belong to text1.
 
     return result
 
