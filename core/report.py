@@ -226,14 +226,35 @@ def write_pdf_report(
 
 
 def _words_to_html(text: str, other: str) -> str:
-    """Convert text with differences to HTML with yellow highlight (ReportLab compatible)."""
+    """Convert text with differences to HTML with yellow highlight (ReportLab compatible).
+    
+    Highlights only words that differ, using intelligent word-level alignment.
+    """
     if not text:
         return '<i>(empty)</i>'
-    pairs = word_diff_pairs(text, other)
+    
+    from difflib import SequenceMatcher
+    
+    words_text = text.split()
+    words_other = other.split()
+    
+    # Use SequenceMatcher to align words intelligently
+    sm = SequenceMatcher(None, words_other, words_text)
+    
+    # Track which words in text are different
+    different_indices = set()
+    for tag, i1, i2, j1, j2 in sm.get_opcodes():
+        if tag != 'equal':
+            # Mark these words as different
+            for idx in range(j1, j2):
+                different_indices.add(idx)
+    
+    # Build HTML with highlighting for different words
     parts = []
-    for word, is_diff in pairs:
-        if is_diff:
+    for idx, word in enumerate(words_text):
+        if idx in different_indices:
             parts.append(f'<font backColor="#ffd54f"><b>{word}</b></font>')
         else:
             parts.append(word)
+    
     return " ".join(parts)
